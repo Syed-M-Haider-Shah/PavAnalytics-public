@@ -63,6 +63,122 @@ pip install -r requirements.txt
 
 The classification model uses `microsoft/swin-tiny-patch4-window7-224` from Hugging Face. Training also uses Weights & Biases (`wandb`) in the supplied experiment code.
 
+## Download Trained Model Weights
+
+The trained model weights are not stored directly in the repository because of their size. They are provided separately through the GitHub Release **PavAnalytics Trained Models**, tag `v1.0_classification-model`:
+
+[Download PavAnalytics Trained Models](https://github.com/Syed-M-Haider-Shah/PavAnalytics/releases/tag/v1.0_classification-model)
+
+The release contains the trained Swin Transformer pavement-condition classifier and the trained SegFormer road-segmentation model.
+
+### Classification model
+
+Download:
+
+```text
+all_model_checkpoints_2layer_2e-5_retrained_all-road-surface.dataset.pth
+```
+
+Place it in:
+
+```text
+PavAnalytics/
+└── classification/
+    └── checkpoints/
+```
+
+Rename the downloaded file to the default filename expected by the runner:
+
+```text
+all_model_checkpoints_2layer_2e-5_retrained_all-road-surface dataset-2nd.pth
+```
+
+The final path should therefore be:
+
+```text
+PavAnalytics/
+└── classification/
+    └── checkpoints/
+        └── all_model_checkpoints_2layer_2e-5_retrained_all-road-surface dataset-2nd.pth
+```
+
+Once the checkpoint is in that location, test the trained classifier with:
+
+```bash
+python run_classification.py \
+  --mode test \
+  --test-dir /path/to/Test
+```
+
+Generate Grad-CAM explanations from the same trained checkpoint with:
+
+```bash
+python run_classification.py \
+  --mode gradcam \
+  --test-dir /path/to/Test
+```
+
+Alternatively, keep the downloaded filename unchanged and pass it explicitly with `--checkpoint`.
+
+### Segmentation model
+
+Download:
+
+```text
+model.safetensors
+```
+
+The repository already contains the SegFormer `config.json` and `preprocessor_config.json`. Place `model.safetensors` in:
+
+```text
+PavAnalytics/
+└── segmentation/
+    └── checkpoints/
+        └── final_model/
+```
+
+The complete folder must contain:
+
+```text
+segmentation/
+└── checkpoints/
+    └── final_model/
+        ├── config.json
+        ├── preprocessor_config.json
+        └── model.safetensors
+```
+
+`run_segmentation.py` loads this local trained model directly. It is configured not to silently substitute another downloaded SegFormer model.
+
+Run segmentation on every supported image in a folder with:
+
+```bash
+python run_segmentation.py \
+  --input-dir /path/to/images \
+  --output-dir /path/to/segmentation_outputs
+```
+
+Use `--recursive` if the input directory contains subfolders.
+
+### Verify the model files
+
+Before running trained-model inference, the relevant part of the repository should look like this:
+
+```text
+PavAnalytics/
+├── classification/
+│   └── checkpoints/
+│       └── all_model_checkpoints_2layer_2e-5_retrained_all-road-surface dataset-2nd.pth
+└── segmentation/
+    └── checkpoints/
+        └── final_model/
+            ├── config.json
+            ├── preprocessor_config.json
+            └── model.safetensors
+```
+
+If either trained weight file is missing, the corresponding trained-model inference workflow cannot run.
+
 ## 1. Classification, Testing and Grad-CAM
 
 `run_classification.py` is the main entry point for the pavement-condition classifier. It keeps the supplied Swin Transformer training logic but replaces machine-specific dataset arguments at the top-level runner with command-line paths.
@@ -189,22 +305,6 @@ The automatic correction profile is currently defined for the validated 2048 × 
 
 The tuned profile is an empirical preprocessing profile. It is not presented as a replacement for measured checkerboard calibration. The calibration workflow in `fisheye_correction/calibration.py` and `fisheye_correction/correction.py` should be used when the camera's measured `K` and `D` parameters are available.
 
-## Model Checkpoints
-
-### Segmentation
-
-The SegFormer model configuration and preprocessing configuration are stored under `segmentation/checkpoints/final_model/`. The trained `model.safetensors` file belongs in the same directory.
-
-### Classification
-
-Training saves the Swin classifier checkpoint to:
-
-```text
-classification/checkpoints/all_model_checkpoints_2layer_2e-5_retrained_all-road-surface dataset-2nd.pth
-```
-
-`.pth` files are excluded by `.gitignore` to avoid accidental publication of local experimental checkpoints. A different checkpoint can be supplied explicitly with `--checkpoint` when running `run_classification.py`.
-
 ## Technology Stack
 
 ### Core Libraries
@@ -234,4 +334,4 @@ classification/checkpoints/all_model_checkpoints_2layer_2e-5_retrained_all-road-
 
 ## Status
 
-The repository now contains the implementation for pavement classification, test-set Grad-CAM generation, road segmentation and fisheye preprocessing. Additional datasets and large experiment artefacts are not required to be stored directly in the repository.
+The repository now contains the implementation for pavement classification, test-set Grad-CAM generation, road segmentation and fisheye preprocessing. The trained classification and segmentation weights are distributed separately through the GitHub Release linked above.
